@@ -1,0 +1,49 @@
+directives:
+- add_directives:
+    file: package://manipulation/schunk_wsg_50_welded_fingers.dmd.yaml
+    
+- add_model:
+    name: garden_table
+    file: package://RoboticRecycling/models/picnic_table/garden_table.sdf
+
+- add_model:
+    name: trash_bin
+    file: package://RoboticRecycling/models/waste_bins/OBJ/waste_bin/waste_bin.sdf
+    
+- add_model:
+    name: recycle_bin
+    file: package://RoboticRecycling/models/waste_bins/OBJ/recycle_bin/recycle_bin.sdf
+
+- add_model:
+    name: organic_bin
+    file: package://RoboticRecycling/models/waste_bins/OBJ/organic_bin/organic_bin.sdf
+
+- add_frame:
+    name: camera0_origin
+    X_PF:
+        base_frame: world
+        rotation: !Rpy { deg: [-120.0, 0, 90.0]}
+        translation: [.5, -.625, .65]
+
+- add_model:
+    name: camera0
+    file: package://manipulation/camera_box.sdf
+
+- add_weld:
+    parent: camera0_origin
+    child: camera0::base
+
+- add_frame:
+    name: camera1_origin
+    X_PF:
+        base_frame: world
+        rotation: !Rpy { deg: [-100., 0, -50]}
+        translation: [-0.35, -.9, .525]
+
+- add_model:
+    name: camera1
+    file: package://manipulation/camera_box.sdf
+
+- add_weld:
+    parent: camera1_origin
+    child: camera1::base

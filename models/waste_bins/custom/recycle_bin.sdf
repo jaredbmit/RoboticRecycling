@@ -1,0 +1,24 @@
+<?xml version="1.0" ?>
+<sdf version='1.5'>
+  <model name='recycle_bin'>
+    <static>true</static>
+      <link name='recycle_bin'>
+        <pose frame=''>0.5 -.2 0 1.57079 0 0</pose>
+         <collision name='recycle_bin'>
+          <geometry>
+            <mesh>
+              <uri>package://RoboticRecycling/models/waste_bins/OBJ/recycle_bin/Recycle Bin.obj</uri>
+            </mesh>
+          </geometry>
+        </collision>
+        <visual name='recycle_bin'>
+          <geometry>
+            <mesh>
+              <scale>.017 .017 .017</scale>
+              <uri>package://RoboticRecycling/models/waste_bins/OBJ/recycle_bin/Recycle Bin.obj</uri>
+            </mesh>
+          </geometry>
+        </visual>
+      </link>
+  </model>
+</sdf>

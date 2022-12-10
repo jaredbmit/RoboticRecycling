@@ -1,0 +1,12 @@
+Low-poly trees:
+https://www.turbosquid.com/3d-models/blender-carrot-crystal-oak-tree-3d-model-1189852
+Picnic table:
+https://www.turbosquid.com/3d-models/garden-table-obj-free/966265
+Waste bins:
+https://grabcad.com/library/waste-bins-1/details?folder_id=3553385
+Coke can:
+https://www.turbosquid.com/3d-models/free-obj-model-coca-cola/791562
+
+Decomp tool:
+https://github.com/gizatt/convex_decomp_to_sdf
+https://github.com/MPEGGroup/trimesh/blob/master/docker/builds/vhacd.bash

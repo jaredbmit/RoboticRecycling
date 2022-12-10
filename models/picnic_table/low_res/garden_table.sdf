@@ -1,0 +1,128 @@
+<sdf xmlns:drake="drake.mit.edu" version="1.5">
+  <model name="garden_table">
+    <link name="garden_table_body_link">
+      <pose>0 -0.6 0 1.5708 0 1.5708</pose>
+      <inertial>
+        <mass>1.1102E+01</mass>
+        <inertia>
+          <ixx>1.5680E+00</ixx>
+          <ixy>-1.2506E-08</ixy>
+          <ixz>2.3260E-07</ixz>
+          <iyy>1.3637E+00</iyy>
+          <iyz>9.2519E-16</iyz>
+          <izz>5.7732E-01</izz>
+        </inertia>
+      </inertial>
+      <visual name="visual">
+        <geometry>
+          <mesh>
+            <uri>garden_table.obj</uri>
+            <scale>3.5000E-01 3.5000E-01 3.5000E-01</scale>
+          </mesh>
+        </geometry>
+        <material>
+          <ambient>0.4 0.2 0 0.8</ambient>
+          <diffuse>0.4 0.2 0 1</diffuse>
+          <specular>0 0 0 0</specular>
+          <emissive>0 0 0 1</emissive>
+        </material>
+      </visual>
+      <collision name="collision_0000">
+        <geometry>
+          <mesh>
+            <uri>garden_table_parts/garden_table_convex_piece_000.obj</uri>
+            <drake:declare_convex/>
+          </mesh>
+        </geometry>
+      </collision>
+      <collision name="collision_0001">
+        <geometry>
+          <mesh>
+            <uri>garden_table_parts/garden_table_convex_piece_001.obj</uri>
+            <drake:declare_convex/>
+          </mesh>
+        </geometry>
+      </collision>
+      <collision name="collision_0002">
+        <geometry>
+          <mesh>
+            <uri>garden_table_parts/garden_table_convex_piece_002.obj</uri>
+            <drake:declare_convex/>
+          </mesh>
+        </geometry>
+      </collision>
+      <collision name="collision_0003">
+        <geometry>
+          <mesh>
+            <uri>garden_table_parts/garden_table_convex_piece_003.obj</uri>
+            <drake:declare_convex/>
+          </mesh>
+        </geometry>
+      </collision>
+      <collision name="collision_0004">
+        <geometry>
+          <mesh>
+            <uri>garden_table_parts/garden_table_convex_piece_004.obj</uri>
+            <drake:declare_convex/>
+          </mesh>
+        </geometry>
+      </collision>
+      <collision name="collision_0005">
+        <geometry>
+          <mesh>
+            <uri>garden_table_parts/garden_table_convex_piece_005.obj</uri>
+            <drake:declare_convex/>
+          </mesh>
+        </geometry>
+      </collision>
+      <collision name="collision_0006">
+        <geometry>
+          <mesh>
+            <uri>garden_table_parts/garden_table_convex_piece_006.obj</uri>
+            <drake:declare_convex/>
+          </mesh>
+        </geometry>
+      </collision>
+      <collision name="collision_0007">
+        <geometry>
+          <mesh>
+            <uri>garden_table_parts/garden_table_convex_piece_007.obj</uri>
+            <drake:declare_convex/>
+          </mesh>
+        </geometry>
+      </collision>
+      <collision name="collision_0008">
+        <geometry>
+          <mesh>
+            <uri>garden_table_parts/garden_table_convex_piece_008.obj</uri>
+            <drake:declare_convex/>
+          </mesh>
+        </geometry>
+      </collision>
+      <collision name="collision_0009">
+        <geometry>
+          <mesh>
+            <uri>garden_table_parts/garden_table_convex_piece_009.obj</uri>
+            <drake:declare_convex/>
+          </mesh>
+        </geometry>
+      </collision>
+      <collision name="collision_0010">
+        <geometry>
+          <mesh>
+            <uri>garden_table_parts/garden_table_convex_piece_010.obj</uri>
+            <drake:declare_convex/>
+          </mesh>
+        </geometry>
+      </collision>
+      <collision name="collision_0011">
+        <geometry>
+          <mesh>
+            <uri>garden_table_parts/garden_table_convex_piece_011.obj</uri>
+            <drake:declare_convex/>
+          </mesh>
+        </geometry>
+      </collision>
+    </link>
+  </model>
+</sdf>

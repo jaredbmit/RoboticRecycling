@@ -1,0 +1,31 @@
+
+<?xml version="1.0" ?>
+<sdf version='1.5'>
+  <model name='picnic_table'>
+    <static>true</static>
+      <link name='picnic_table'>
+        <pose frame=''>0 -0.6 0 1.5708 0 1.5708</pose>
+         <collision name='picnic_table'>
+          <geometry>
+            <mesh>
+              <uri>package://RoboticRecycling/models/picnic_table/garden_table.obj</uri>
+            </mesh>
+          </geometry>
+        </collision>
+        <visual name='picnic_table'>
+          <geometry>
+            <mesh>
+              <scale>0.35 0.35 0.35</scale>
+              <uri>package://RoboticRecycling/models/picnic_table/garden_table.obj</uri>
+            </mesh>
+          </geometry>
+          <material>
+            <ambient>0.4 0.2 0 0.8</ambient>
+            <diffuse>0.4 0.2 0 1</diffuse>
+            <specular>0 0 0 0</specular>
+            <emissive>0 0 0 1</emissive>
+          </material>
+        </visual>
+      </link>
+  </model>
+</sdf>

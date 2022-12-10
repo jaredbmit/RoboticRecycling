@@ -1,0 +1,57 @@
+directives:
+- add_directives:
+    file: package://manipulation/iiwa_and_wsg.dmd.yaml
+    
+- add_model:
+    name: ground
+    file: package://RoboticRecycling/models/ground.urdf
+
+- add_model:
+    name: tree
+    file: package://RoboticRecycling/models/tree/tree.sdf
+    
+- add_model:
+    name: garden_table
+    file: package://RoboticRecycling/models/picnic_table/garden_table.sdf
+
+- add_model:
+    name: trash_bin
+    file: package://RoboticRecycling/models/waste_bins/OBJ/waste_bin/waste_bin.sdf
+    
+- add_model:
+    name: recycle_bin
+    file: package://RoboticRecycling/models/waste_bins/OBJ/recycle_bin/recycle_bin.sdf
+
+- add_model:
+    name: organic_bin
+    file: package://RoboticRecycling/models/waste_bins/OBJ/organic_bin/organic_bin.sdf
+
+- add_frame:
+    name: camera0_origin
+    X_PF:
+        base_frame: world
+        rotation: !Rpy { deg: [-110.0, 0, 90.0]}
+        translation: [.7, -.6, .55]
+
+- add_model:
+    name: camera0
+    file: package://manipulation/camera_box.sdf
+
+- add_weld:
+    parent: camera0_origin
+    child: camera0::base
+
+- add_frame:
+    name: camera1_origin
+    X_PF:
+        base_frame: world
+        rotation: !Rpy { deg: [-100., 0, -45]}
+        translation: [-0.55, -.95, .525]
+
+- add_model:
+    name: camera1
+    file: package://manipulation/camera_box.sdf
+
+- add_weld:
+    parent: camera1_origin
+    child: camera1::base

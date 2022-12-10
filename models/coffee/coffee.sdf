@@ -1,0 +1,74 @@
+<sdf xmlns:drake="drake.mit.edu" version="1.5">
+  <model name="coffee">
+    <link name="coffee_body_link">
+      <pose>0 0 0 0 0 0</pose>
+      <inertial>
+        <mass>9.1120E-02</mass>
+        <inertia>
+          <ixx>3.0077E-05</ixx>
+          <ixy>-1.5476E-13</ixy>
+          <ixz>1.2581E-13</ixz>
+          <iyy>1.1490E-05</iyy>
+          <iyz>1.7263E-13</iyz>
+          <izz>3.0077E-05</izz>
+        </inertia>
+      </inertial>
+      <visual name="visual">
+        <geometry>
+          <mesh>
+            <uri>coffee.obj</uri>
+            <scale>5.0000E-03 5.0000E-03 5.0000E-03</scale>
+          </mesh>
+        </geometry>
+      </visual>
+      <collision name="collision_0000">
+        <geometry>
+          <mesh>
+            <uri>coffee_parts/coffee_convex_piece_000.obj</uri>
+            <drake:declare_convex/>
+          </mesh>
+        </geometry>
+      </collision>
+      <collision name="collision_0001">
+        <geometry>
+          <mesh>
+            <uri>coffee_parts/coffee_convex_piece_001.obj</uri>
+            <drake:declare_convex/>
+          </mesh>
+        </geometry>
+      </collision>
+      <collision name="collision_0002">
+        <geometry>
+          <mesh>
+            <uri>coffee_parts/coffee_convex_piece_002.obj</uri>
+            <drake:declare_convex/>
+          </mesh>
+        </geometry>
+      </collision>
+      <collision name="collision_0003">
+        <geometry>
+          <mesh>
+            <uri>coffee_parts/coffee_convex_piece_003.obj</uri>
+            <drake:declare_convex/>
+          </mesh>
+        </geometry>
+      </collision>
+      <collision name="collision_0004">
+        <geometry>
+          <mesh>
+            <uri>coffee_parts/coffee_convex_piece_004.obj</uri>
+            <drake:declare_convex/>
+          </mesh>
+        </geometry>
+      </collision>
+      <collision name="collision_0005">
+        <geometry>
+          <mesh>
+            <uri>coffee_parts/coffee_convex_piece_005.obj</uri>
+            <drake:declare_convex/>
+          </mesh>
+        </geometry>
+      </collision>
+    </link>
+  </model>
+</sdf>

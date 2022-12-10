@@ -1,0 +1,122 @@
+<sdf xmlns:drake="drake.mit.edu" version="1.5">
+  <model name="waste_bin">
+    <link name="waste_bin_body_link">
+      <pose>0.5 0 0 1.57079 0 0</pose>
+      <inertial>
+        <mass>1.0910E+00</mass>
+        <inertia>
+          <ixx>3.3922E-02</ixx>
+          <ixy>3.6408E-05</ixy>
+          <ixz>8.2710E-06</ixz>
+          <iyy>1.8044E-02</iyy>
+          <iyz>-1.2705E-06</iyz>
+          <izz>4.2208E-02</izz>
+        </inertia>
+      </inertial>
+      <visual name="visual">
+        <geometry>
+          <mesh>
+            <uri>waste_bin.obj</uri>
+            <scale>1.7000E-02 1.7000E-02 1.7000E-02</scale>
+          </mesh>
+        </geometry>
+      </visual>
+      <collision name="collision_0000">
+        <geometry>
+          <mesh>
+            <uri>waste_bin_parts/waste_bin_convex_piece_000.obj</uri>
+            <drake:declare_convex/>
+          </mesh>
+        </geometry>
+      </collision>
+      <collision name="collision_0001">
+        <geometry>
+          <mesh>
+            <uri>waste_bin_parts/waste_bin_convex_piece_001.obj</uri>
+            <drake:declare_convex/>
+          </mesh>
+        </geometry>
+      </collision>
+      <collision name="collision_0002">
+        <geometry>
+          <mesh>
+            <uri>waste_bin_parts/waste_bin_convex_piece_002.obj</uri>
+            <drake:declare_convex/>
+          </mesh>
+        </geometry>
+      </collision>
+      <collision name="collision_0003">
+        <geometry>
+          <mesh>
+            <uri>waste_bin_parts/waste_bin_convex_piece_003.obj</uri>
+            <drake:declare_convex/>
+          </mesh>
+        </geometry>
+      </collision>
+      <collision name="collision_0004">
+        <geometry>
+          <mesh>
+            <uri>waste_bin_parts/waste_bin_convex_piece_004.obj</uri>
+            <drake:declare_convex/>
+          </mesh>
+        </geometry>
+      </collision>
+      <collision name="collision_0005">
+        <geometry>
+          <mesh>
+            <uri>waste_bin_parts/waste_bin_convex_piece_005.obj</uri>
+            <drake:declare_convex/>
+          </mesh>
+        </geometry>
+      </collision>
+      <collision name="collision_0006">
+        <geometry>
+          <mesh>
+            <uri>waste_bin_parts/waste_bin_convex_piece_006.obj</uri>
+            <drake:declare_convex/>
+          </mesh>
+        </geometry>
+      </collision>
+      <collision name="collision_0007">
+        <geometry>
+          <mesh>
+            <uri>waste_bin_parts/waste_bin_convex_piece_007.obj</uri>
+            <drake:declare_convex/>
+          </mesh>
+        </geometry>
+      </collision>
+      <collision name="collision_0008">
+        <geometry>
+          <mesh>
+            <uri>waste_bin_parts/waste_bin_convex_piece_008.obj</uri>
+            <drake:declare_convex/>
+          </mesh>
+        </geometry>
+      </collision>
+      <collision name="collision_0009">
+        <geometry>
+          <mesh>
+            <uri>waste_bin_parts/waste_bin_convex_piece_009.obj</uri>
+            <drake:declare_convex/>
+          </mesh>
+        </geometry>
+      </collision>
+      <collision name="collision_0010">
+        <geometry>
+          <mesh>
+            <uri>waste_bin_parts/waste_bin_convex_piece_010.obj</uri>
+            <drake:declare_convex/>
+          </mesh>
+        </geometry>
+      </collision>
+      <collision name="collision_0011">
+        <geometry>
+          <mesh>
+            <uri>waste_bin_parts/waste_bin_convex_piece_011.obj</uri>
+            <drake:declare_convex/>
+          </mesh>
+        </geometry>
+      </collision>
+    </link>
+  </model>
+</sdf>
