@@ -4,10 +4,6 @@ directives:
     file: package://RoboticRecycling/models/picnic_table/garden_table.sdf
 
 - add_model:
-    name: can
-    file: package://RoboticRecycling/models/can/cola_can.sdf
-
-- add_model:
     name: bottle
     file: package://RoboticRecycling/models/bottle/bottle.sdf
 

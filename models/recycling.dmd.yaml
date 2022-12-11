@@ -25,10 +25,6 @@ directives:
 - add_model:
     name: organic_bin
     file: package://RoboticRecycling/models/waste_bins/OBJ/organic_bin/organic_bin.sdf
-    
-- add_model:
-    name: can
-    file: package://RoboticRecycling/models/can/cola_can.sdf
 
 - add_model:
     name: bottle
