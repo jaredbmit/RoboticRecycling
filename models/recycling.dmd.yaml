@@ -1,6 +1,6 @@
 directives:
 - add_directives:
-    file: package://manipulation/iiwa_and_wsg.dmd.yaml
+    file: package://RoboticRecycling/models/iiwa_and_wsg.dmd.yaml
     
 - add_model:
     name: ground

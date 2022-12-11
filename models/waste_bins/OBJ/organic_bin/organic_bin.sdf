@@ -1,23 +1,23 @@
 <sdf xmlns:drake="drake.mit.edu" version="1.5">
   <model name="organic_bin">
     <link name="organic_bin_body_link">
-      <pose>0.5 0.2 0 1.57079 0 0</pose>
+      <pose>0.4 .05 0 1.57 0 0</pose>
       <inertial>
-        <mass>1.0925E+00</mass>
+        <mass>5.4709E-01</mass>
         <inertia>
-          <ixx>3.3933E-02</ixx>
-          <ixy>3.4019E-05</ixy>
-          <ixz>7.5658E-06</ixz>
-          <iyy>1.8081E-02</iyy>
-          <iyz>-2.3004E-06</iyz>
-          <izz>4.2248E-02</izz>
+          <ixx>1.0716E-02</ixx>
+          <ixy>1.0744E-05</ixy>
+          <ixz>2.3894E-06</ixz>
+          <iyy>5.7103E-03</iyy>
+          <iyz>-7.2648E-07</iyz>
+          <izz>1.3342E-02</izz>
         </inertia>
       </inertial>
       <visual name="visual">
         <geometry>
           <mesh>
             <uri>organic_bin.obj</uri>
-            <scale>1.7000E-02 1.7000E-02 1.7000E-02</scale>
+            <scale>1.3500E-02 1.3500E-02 1.3500E-02</scale>
           </mesh>
         </geometry>
       </visual>
