@@ -1,6 +1,6 @@
 <sdf xmlns:drake="drake.mit.edu" version="1.5">
   <model name="Banana">
-    <link name="Banana_body_link">
+    <link name="Banana">
       <pose>0 0 0 0 0 0</pose>
       <inertial>
         <mass>8.8549E-02</mass>

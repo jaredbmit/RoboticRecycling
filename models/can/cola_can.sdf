@@ -1,6 +1,6 @@
 <sdf xmlns:drake="drake.mit.edu" version="1.5">
   <model name="cola_can">
-    <link name="cola_can_body_link">
+    <link name="cola_can">
       <pose>0 0 0 0 0 0</pose>
       <inertial>
         <mass>9.1120E-02</mass>

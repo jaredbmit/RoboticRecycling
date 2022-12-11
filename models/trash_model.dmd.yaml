@@ -1,0 +1,24 @@
+directives:
+- add_model:
+    name: garden_table
+    file: package://RoboticRecycling/models/picnic_table/garden_table.sdf
+
+- add_model:
+    name: can
+    file: package://RoboticRecycling/models/can/cola_can.sdf
+
+- add_model:
+    name: bottle
+    file: package://RoboticRecycling/models/bottle/bottle.sdf
+
+- add_model:
+    name: banana
+    file: package://RoboticRecycling/models/banana/Banana.sdf
+
+- add_model:
+    name: orange
+    file: package://RoboticRecycling/models/orange/Orange.sdf
+
+- add_model:
+    name: coffee
+    file: package://RoboticRecycling/models/coffee/coffee.sdf

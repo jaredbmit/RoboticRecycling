@@ -1,6 +1,6 @@
 <sdf xmlns:drake="drake.mit.edu" version="1.5">
   <model name="Orange">
-    <link name="Orange_body_link">
+    <link name="Orange">
       <pose>0 0 0 0 0 0</pose>
       <inertial>
         <mass>6.5941E-02</mass>

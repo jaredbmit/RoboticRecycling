@@ -1,6 +1,6 @@
 <sdf xmlns:drake="drake.mit.edu" version="1.5">
   <model name="coffee">
-    <link name="coffee_body_link">
+    <link name="coffee">
       <pose>0 0 0 0 0 0</pose>
       <inertial>
         <mass>9.1120E-02</mass>

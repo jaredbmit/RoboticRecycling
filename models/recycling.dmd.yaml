@@ -25,6 +25,26 @@ directives:
 - add_model:
     name: organic_bin
     file: package://RoboticRecycling/models/waste_bins/OBJ/organic_bin/organic_bin.sdf
+    
+- add_model:
+    name: can
+    file: package://RoboticRecycling/models/can/cola_can.sdf
+
+- add_model:
+    name: bottle
+    file: package://RoboticRecycling/models/bottle/bottle.sdf
+
+- add_model:
+    name: banana
+    file: package://RoboticRecycling/models/banana/Banana.sdf
+
+- add_model:
+    name: orange
+    file: package://RoboticRecycling/models/orange/Orange.sdf
+
+- add_model:
+    name: coffee
+    file: package://RoboticRecycling/models/coffee/coffee.sdf
 
 - add_frame:
     name: camera0_origin
