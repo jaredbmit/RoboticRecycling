@@ -1,3 +1,3 @@
 Implemented in Drake
 
-TODO: Upload Mask R-CNN model. 150 MB > 100 MB github max file
+[Install Mask R-CNN model here!](https://drive.google.com/file/d/1ND4X1mrsWMg_ggJNeK_YZb4vVIUs2hns/view?usp=sharing)
