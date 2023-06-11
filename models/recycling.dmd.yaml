@@ -35,10 +35,6 @@ directives:
     file: package://RoboticRecycling/models/banana/Banana.sdf
 
 - add_model:
-    name: orange
-    file: package://RoboticRecycling/models/orange/Orange.sdf
-
-- add_model:
     name: coffee
     file: package://RoboticRecycling/models/coffee/coffee.sdf
 

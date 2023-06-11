@@ -20,6 +20,12 @@
             <scale>5.0000E-03 5.0000E-03 5.0000E-03</scale>
           </mesh>
         </geometry>
+        <material>
+          <ambient>0.77 0.64 0.52 0.8</ambient>
+          <diffuse>0.77 0.64 0.52 1</diffuse>
+          <specular>0.77 0.64 0.52 0.5</specular>
+          <emissive>0 0 0 1</emissive>
+        </material>
       </visual>
       <collision name="collision_0000">
         <geometry>
