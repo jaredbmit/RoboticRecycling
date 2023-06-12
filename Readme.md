@@ -12,6 +12,8 @@ python3 -m venv recycle_env --system-site-packages
 source recycle_env/bin/activate
 ```
 
+Then make sure to select the python interpreter or jupyter kernel for this virtual environment in your IDE.
+
 2. Generate training data using the jupyter notebook 'make_training_data.ipynb'.
 
 3. Train the model using the jupyter notebook 'clutter_maskrcnn_train.ipynb'.
