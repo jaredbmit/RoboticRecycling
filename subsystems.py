@@ -1,8 +1,8 @@
 from enum import Enum
 import numpy as np
 from pydrake.all import (LeafSystem, JacobianWrtVariable, PointCloud, ImageRgba8U, ImageDepth32F, 
-                        Concatenate, AddMultibodyPlantSceneGraph, Role, BaseField, Fields, 
-                        RigidTransform, RotationMatrix, AbstractValue, PiecewisePose)
+                        Concatenate, BaseField, Fields, RigidTransform, RotationMatrix, 
+                        AbstractValue, PiecewisePose)
 
 import torch
 import torch.utils.data
@@ -13,6 +13,10 @@ from torchvision.models.detection.mask_rcnn import MaskRCNNPredictor
 from torchvision.models.detection import MaskRCNN_ResNet50_FPN_Weights
 
 class PseudoInverseController(LeafSystem):
+    """
+    Ingests a desired iiwa spatial velocity time sequence (differentiated trajectory)
+    and outputs a time sequence of joint velocity commands
+    """
     def __init__(self, plant):
         LeafSystem.__init__(self)
         self._plant = plant
@@ -37,7 +41,62 @@ class PseudoInverseController(LeafSystem):
         J_G = J_G[:,self.iiwa_start:self.iiwa_end+1] # Only iiwa terms.
         v = np.linalg.pinv(J_G).dot(V_G)
         output.SetFromVector(v)
+
+class ClosedLoopPseudoInverseController(LeafSystem):
+    """
+    Ingests a desired iiwa spatial trajectory and outputs joint velocity commands
+    """
+    def __init__(self, plant, dt=0.05):
+        LeafSystem.__init__(self)
+        self._plant = plant
+        self._plant_context = plant.CreateDefaultContext()
+        self._iiwa = plant.GetModelInstanceByName("iiwa")
+        self._G = plant.GetBodyByName("body").body_frame()
+        self._W = plant.world_frame()
+        self.dt = dt # Look ahead time for trajectory follower
+
+        traj_dtype = AbstractValue.Make(PiecewisePose())
+        self.T_G_port = self.DeclareAbstractInputPort("T_WG", traj_dtype)
+        self.q_port = self.DeclareVectorInputPort("iiwa_position", 7)
+        self.DeclareVectorOutputPort("iiwa_velocity", 7, self.CalcOutput)
+        self.iiwa_start = plant.GetJointByName("iiwa_joint_1").velocity_start()
+        self.iiwa_end = plant.GetJointByName("iiwa_joint_7").velocity_start()
+
+    def CalcOutput(self, context, output):
         
+        T_G = self.T_G_port.Eval(context)
+
+        # TODO: Change to .empty() or something like that
+        if T_G.get_number_of_segments() == 0:
+            output.SetFromVector(np.zeros(7))
+            return
+        
+        # Update internal plant context to match the current state of the plant
+        q = self.q_port.Eval(context)
+        self._plant.SetPositions(self._plant_context, self._iiwa, q)
+        # Forward kinematics to get current pose of the gripper
+        X_G = self._plant.CalcRelativeTransform(
+            self._plant_context,
+            frame_A=self._W,
+            frame_B=self._G)
+        
+        # Evaluate instantaneous trajectory goal
+        time = context.get_time()
+        time_next = time + self.dt
+        X_D_array = T_G.value(time_next) # np array
+        X_D = RigidTransform(X_D_array) # convert to RigidTransform
+        T_D_mini = PiecewisePose.MakeLinear([time, time_next], [X_G, X_D]) # Mini trajectory to next desired pose
+        V_D = T_D_mini.MakeDerivative().value(time) # Instantaneously Desired Velocity
+
+        # Calculate Jacobian
+        J_G = self._plant.CalcJacobianSpatialVelocity(
+            self._plant_context, JacobianWrtVariable.kV,
+            self._G, [0,0,0], self._W, self._W)
+        J_G = J_G[:,self.iiwa_start:self.iiwa_end+1] # Only iiwa terms.
+
+        # Calculate joint velocities
+        v = np.linalg.pinv(J_G).dot(V_D)
+        output.SetFromVector(v)  
         
 class Vision(LeafSystem):
     def __init__(self, station, camera_body_indices, model_path, item_names):
@@ -67,7 +126,7 @@ class Vision(LeafSystem):
         self.cam_info_1 = station.GetSubsystemByName('camera0').depth_camera_info()
             
         ## Load model
-        num_classes = len(item_names) + 1
+        num_classes = len(item_names)
         self.model = self.load_model(num_classes)
         self.device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
         self.model.load_state_dict(torch.load(model_path, map_location=self.device))
@@ -381,16 +440,16 @@ class GarbageType(Enum):
             
             
 class PlannerState(Enum):
-    DEBUG = -1
-    WAIT = 0
-    SELECT_GRASP = 1
-    PICK = 2
-    PLACE = 3
-    HOME = 4
+    INIT = 0
+    WAIT = 1
+    SELECT_GRASP = 2
+    PICK = 3
+    PLACE = 4
     CLOSE = 5
     OPEN = 6
-            
-            
+    HOME = 7
+
+
 class Planner(LeafSystem):
     def __init__(self, plant, Xs, garbage_map):
         LeafSystem.__init__(self)
@@ -402,42 +461,38 @@ class Planner(LeafSystem):
         self._wsg_state_index = self.DeclareVectorInputPort("wsg_state", 2).get_index()
         self.DeclareVectorInputPort("iiwa_position", 7)
         
+        # Dictionary mapping garbage type to bin placing pose
+        self.Xs = Xs 
         self.X_WHome = Xs['Home']
-        self.X_WRecycle = Xs[GarbageType.RECYCLE]
-        self.X_WTrash = Xs[GarbageType.TRASH]
-        self.X_WOrganic = Xs[GarbageType.ORGANIC]
         
         self.eps = 1e-4
-        self.init = True
-        self.prev_time = None
-        self.mode = PlannerState.WAIT
+        self.prev_time = 0
+        self.mode = PlannerState.INIT
         self.wsg_des = np.array([0.107])
-        self.traj_WG = PiecewisePose.MakeLinear([0, np.inf], [RigidTransform(), RigidTransform()])
+        self.T_WG = PiecewisePose()
         self.garbage_type = GarbageType.RECYCLE
         self.garbage_map = garbage_map
-        self.num_successful_picks = 0
+        self.num_classes = len(garbage_map)
+        self.num_picks = 0
         
         self.DeclareVectorOutputPort("wsg_position", 1,
             lambda context, output: output.SetFromVector([self.wsg_des]))
-        self.DeclareVectorOutputPort("V_WG", 6, self.SendTrajV)
-        
+        self.DeclareAbstractOutputPort("T_WG", lambda: AbstractValue.Make(PiecewisePose()), self.SendTraj)
+
         self.DeclarePeriodicUnrestrictedUpdateEvent(0.1, 0.0, self.Update)
         
     def Update(self, context, state):
-        if self.mode == PlannerState.DEBUG:
+        
+        if self.num_picks == self.num_classes:
             return
         
-        if self.init:
+        if self.mode == PlannerState.INIT:
             self.prev_time = context.get_time()
-            self.init = False
-            return
-        
-        if self.num_successful_picks == 4:
-            print("Finished")
+            self.mode = PlannerState.WAIT
             return
         
         if self.mode == PlannerState.WAIT:
-            if context.get_time() - self.prev_time > 2.:
+            if context.get_time() - self.prev_time > 1:
                 self.mode = PlannerState.SELECT_GRASP
             
         if self.mode == PlannerState.SELECT_GRASP:
@@ -445,55 +500,48 @@ class Planner(LeafSystem):
             [cost, X_WD, item_selection] = self.get_input_port(self._grasp_index).Eval(context)
             self.garbage_type = self.garbage_map[item_selection]
             if cost == np.inf:
+                print("No valid grasp found, waiting before trying again.")
                 self.mode = PlannerState.WAIT
                 self.prev_time = context.get_time()
             else:
-                self.traj_WG = self.MakePickingTraj(context, X_WD)
+                self.T_WG = self.MakePickingTraj(context, X_WD)
                 self.mode = PlannerState.PICK
                 
         if self.mode == PlannerState.PICK:
             if self.TrajDone(context):
                 self.mode = PlannerState.CLOSE
+                self.prev_time = context.get_time()
                 self.wsg_des = np.array([0.0])
             
-        # Need a better way to determine when it's closed.
         if self.mode == PlannerState.CLOSE:
-            if context.get_time() - self.prev_time > 2.:
-                self.traj_WG = self.MakePlacingTraj(context, self.garbage_type)
+            if context.get_time() - self.prev_time > 0.5:
+                self.T_WG = self.MakePlacingTraj(context, self.garbage_type)
                 self.mode = PlannerState.PLACE
             
         if self.mode == PlannerState.PLACE:
             if self.TrajDone(context):
                 self.mode = PlannerState.OPEN
+                self.prev_time = context.get_time()
                 self.wsg_des = np.array([0.107])
             
         if self.mode == PlannerState.OPEN:
-            wsg_state = self.get_input_port(self._wsg_state_index).Eval(context)
-            if wsg_state[0] > 0.09:
-                self.traj_WG = self.MakeHomeTraj(context)
+            if context.get_time() - self.prev_time > 0.5:
+                self.T_WG = self.MakeHomeTraj(context)
                 self.mode = PlannerState.HOME
                 
         if self.mode == PlannerState.HOME:
             if self.TrajDone(context):
                 self.mode = PlannerState.SELECT_GRASP
-                self.num_successful_picks += 1
+                self.num_picks += 1
             
-
     def TrajDone(self, context):
         """
-        Checks if we have completed our desired trajectory
-            - Time elapsed
-            - We're at the desired end pose
-        If time is up and we're no longer moving, but we haven't 
-            gone to our desired location, then make a micro-adjustment.
+        Checks if gripper is approximately at the desired end pose
         """
-        time = context.get_time()
         X_WG = self.get_input_port(0).Eval(context)[int(self._gripper_body_index)]
-        X_WEnd = self.traj_WG.GetPose(np.inf)
+        X_WEnd = self.T_WG.GetPose(np.inf)
         if X_WG.IsNearlyEqualTo(X_WEnd, self.eps):
             return True
-        elif self.traj_WG.end_time() < time:
-            self.traj_WG = PiecewisePose.MakeLinear([time, time+0.2], [X_WG, X_WEnd])
         
         return False
 
@@ -504,9 +552,9 @@ class Planner(LeafSystem):
         time = context.get_time()
         X_WG = self.get_input_port(0).Eval(context)[int(self._gripper_body_index)]
         X_WPrepick = RigidTransform(RotationMatrix(), [0, 0, 0.1]) @ X_WD
-        traj_WG = PiecewisePose.MakeLinear([time, time+1, time+1.5], [X_WG, X_WPrepick, X_WD])
+        T_WG = PiecewisePose.MakeLinear([time, time+1.5, time+2.25], [X_WG, X_WPrepick, X_WD])
         
-        return traj_WG
+        return T_WG
     
     def MakePlacingTraj(self, context, garbage_type):
         """
@@ -515,17 +563,11 @@ class Planner(LeafSystem):
         time = context.get_time()
         X_WG = self.get_input_port(0).Eval(context)[int(self._gripper_body_index)]
         X_WPostpick = RigidTransform(RotationMatrix(), [0, 0, 0.1]) @ X_WG
-        if garbage_type == GarbageType.TRASH:
-            traj_WG = PiecewisePose.MakeLinear([time, time+0.5, time+1.5, time+4], 
-                          [X_WG, X_WPostpick, self.X_WHome, self.X_WTrash])
-        elif garbage_type == GarbageType.RECYCLE:
-            traj_WG = PiecewisePose.MakeLinear([time, time+0.5, time+1.5, time+4], 
-                          [X_WG, X_WPostpick, self.X_WHome, self.X_WRecycle])
-        elif garbage_type == GarbageType.ORGANIC:
-            traj_WG = PiecewisePose.MakeLinear([time, time+0.5, time+1.5, time+4], 
-                          [X_WG, X_WPostpick, self.X_WHome, self.X_WOrganic])
+        T_WG = PiecewisePose.MakeLinear(
+            [time, time+0.75, time+2.75], 
+            [X_WG, X_WPostpick, self.Xs[garbage_type]])
             
-        return traj_WG
+        return T_WG
     
     def MakeHomeTraj(self, context):
         """
@@ -533,16 +575,12 @@ class Planner(LeafSystem):
         """
         time = context.get_time()
         X_WG = self.get_input_port(0).Eval(context)[int(self._gripper_body_index)]
-        traj_WG = PiecewisePose.MakeLinear([time, time+2.5], [X_WG, self.X_WHome])
+        T_WG = PiecewisePose.MakeLinear([time, time+1.5], [X_WG, self.X_WHome])
         
-        return traj_WG
+        return T_WG
 
-    def SendTrajV(self, context, output):
+    def SendTraj(self, context, output):
         """
-        Callback for evaluating V_WG. Makes derivative of trajectory and publishes
-        the V_WG corresponding to current time.
+        Callback for evaluating T_WG.
         """
-        time = context.get_time()
-        V_WG = self.traj_WG.GetVelocity(time)
-        output.SetFromVector(V_WG)
-        
+        output.set_value(self.T_WG)
