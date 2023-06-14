@@ -55,7 +55,84 @@ class ClosedLoopPseudoInverseController(LeafSystem):
         self._W = plant.world_frame()
         self.dt = dt # Look ahead time for trajectory follower
         self.q0 = q0 # Home
+
+        # # Store self.X_Home
+        # # TODO imlpement joint untangling
+        # self._plant.SetPositions(self._plant_context, self._iiwa, self.q0)
+        # self.X_Home = self._plant.CalcRelativeTransform(
+        #     self._plant_context,
+        #     frame_A=self._W,
+        #     frame_B=self._G)
+
+        traj_dtype = AbstractValue.Make(PiecewisePose())
+        self.T_G_port = self.DeclareAbstractInputPort("T_WG", traj_dtype)
+        self.q_port = self.DeclareVectorInputPort("iiwa_position", 7)
+        self.DeclareVectorOutputPort("iiwa_velocity", 7, self.CalcOutput)
+        self.iiwa_start = plant.GetJointByName("iiwa_joint_1").velocity_start()
+        self.iiwa_end = plant.GetJointByName("iiwa_joint_7").velocity_start()
+
+    def CalcOutput(self, context, output):
+        
+        T_G = self.T_G_port.Eval(context)
+
+        # TODO: Change to .empty() or something like that
+        if T_G.get_number_of_segments() == 0:
+            output.SetFromVector(np.zeros(7))
+            return
+        
+        # Update internal plant context to match the current state of the plant
+        q = self.q_port.Eval(context)
+        self._plant.SetPositions(self._plant_context, self._iiwa, q)
+        # Forward kinematics to get current pose of the gripper
+        X_G = self._plant.CalcRelativeTransform(
+            self._plant_context,
+            frame_A=self._W,
+            frame_B=self._G)
+        
+        # Evaluate instantaneous trajectory goal
+        time = context.get_time()
+        time_next = time + self.dt
+        X_D_array = T_G.value(time_next) # np array
+        X_D = RigidTransform(X_D_array) # convert to RigidTransform
+
+        # Compute spatial velocity
+        T_D_mini = PiecewisePose.MakeLinear([time, time_next], [X_G, X_D]) # Mini trajectory to next desired pose
+        V_D = T_D_mini.MakeDerivative().value(time) # Instantaneously Desired Velocity
+
+        # Calculate Jacobian
+        J_G = self._plant.CalcJacobianSpatialVelocity(
+            self._plant_context, JacobianWrtVariable.kV,
+            self._G, [0,0,0], self._W, self._W)
+        J_G = J_G[:,self.iiwa_start:self.iiwa_end+1] # Only iiwa terms.
+
+        # Calculate joint velocities using pseudo inverse
+        v = np.linalg.pinv(J_G).dot(V_D)
+
+        # Return joint velocities
+        output.SetFromVector(v)
+
+class ClosedLoopQPController(LeafSystem):
+    """
+    Ingests a desired iiwa spatial trajectory and outputs joint velocity commands
+    """
+    def __init__(self, plant, q0, dt=0.05, joint_centering=True):
+        LeafSystem.__init__(self)
+        self._plant = plant
+        self._plant_context = plant.CreateDefaultContext()
+        self._iiwa = plant.GetModelInstanceByName("iiwa")
+        self._G = plant.GetBodyByName("body").body_frame()
+        self._W = plant.world_frame()
+        self.dt = dt # Look ahead time for trajectory follower
+        self.q0 = q0 # Home
         self.joint_centering = joint_centering
+
+        # # Store self.X_Home
+        # # TODO imlpement joint untangling
+        # self._plant.SetPositions(self._plant_context, self._iiwa, self.q0)
+        # self.X_Home = self._plant.CalcRelativeTransform(
+        #     self._plant_context,
+        #     frame_A=self._W,
+        #     frame_B=self._G)
 
         traj_dtype = AbstractValue.Make(PiecewisePose())
         self.T_G_port = self.DeclareAbstractInputPort("T_WG", traj_dtype)
@@ -135,11 +212,8 @@ class ClosedLoopPseudoInverseController(LeafSystem):
         # Calculate joint velocities using QP
         v = self.QP(q, J_G, V_D).reshape((7,1))
 
-        # # Calculate joint velocities using pseudo inverse
-        # v = np.linalg.pinv(J_G).dot(V_D)
-
         # Return joint velocities
-        output.SetFromVector(v)
+        output.SetFromVector(v)        
         
 class Vision(LeafSystem):
     def __init__(self, station, camera_body_indices, model_path, item_names):
@@ -607,8 +681,8 @@ class Planner(LeafSystem):
         X_WG = self.get_input_port(0).Eval(context)[int(self._gripper_body_index)]
         X_WPostpick = RigidTransform(RotationMatrix(), [0, 0, 0.1]) @ X_WG
         T_WG = PiecewisePose.MakeLinear(
-            [time, time+0.75, time+2.75], 
-            [X_WG, X_WPostpick, self.Xs[garbage_type]])
+            [time, time+0.75, time+2.25, time+3.75], 
+            [X_WG, X_WPostpick, self.X_WHome, self.Xs[garbage_type]])
             
         return T_WG
     
