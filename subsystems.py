@@ -222,6 +222,7 @@ class Vision(LeafSystem):
         rgb_image = AbstractValue.Make(ImageRgba8U(640,480))
         depth_image = AbstractValue.Make(ImageDepth32F(640,480))
         point_cloud = AbstractValue.Make(PointCloud(0))
+        self._segmented_point_cloud = PointCloud(0)
         self.DeclareAbstractInputPort("depth0", depth_image)
         self.DeclareAbstractInputPort("depth1", depth_image)
         self.DeclareAbstractInputPort("rgb0", rgb_image)
@@ -229,9 +230,14 @@ class Vision(LeafSystem):
         self.DeclareAbstractInputPort(
             "body_poses", AbstractValue.Make([RigidTransform()]))
         
-        self.DeclareAbstractOutputPort("point_cloud_W", 
+        self.DeclareAbstractOutputPort(
+            "point_cloud_info", 
             lambda: AbstractValue.Make((0, "", point_cloud)), 
             self.SendSegmentedCloud)
+        self.DeclareAbstractOutputPort(
+            "point_cloud", 
+            lambda: AbstractValue.Make(PointCloud(0)), 
+            self.VisSegmentedCloud)
             
         # Crop box for area of interest
         self._crop_lower = np.array([-.5, -.75, .39])
@@ -302,7 +308,8 @@ class Vision(LeafSystem):
            X_WCs, [self.cam_info_0, self.cam_info_1])
         
         cloud.Crop(self._crop_lower, self._crop_upper)
-        
+        self._segmented_point_cloud = cloud
+
         output.set_value((score, self.item_names[obj_idx], cloud))
         
     def get_merged_masked_pcd(self, predictions, rgb_ims, depth_ims, 
@@ -397,6 +404,9 @@ class Vision(LeafSystem):
         Y = (v-cy) * Z/fy
         pC = np.c_[X,Y,Z]
         return pC
+    
+    def VisSegmentedCloud(self, context, output):
+        output.set_value(self._segmented_point_cloud)
 
     
 class GraspSelector(LeafSystem):
@@ -404,7 +414,7 @@ class GraspSelector(LeafSystem):
         LeafSystem.__init__(self)
         
         point_cloud = AbstractValue.Make(PointCloud(0))
-        self.DeclareAbstractInputPort("point_cloud_W", 
+        self.DeclareAbstractInputPort("point_cloud_info", 
             AbstractValue.Make((0, "", point_cloud)))
         
         port = self.DeclareAbstractOutputPort(
@@ -527,7 +537,7 @@ class GraspSelector(LeafSystem):
         
     def SelectGrasp(self, context, output):
         
-        score, item_selection, down_sampled_pcd = self.GetInputPort("point_cloud_W").Eval(context)
+        score, item_selection, down_sampled_pcd = self.GetInputPort("point_cloud_info").Eval(context)
         if score < 0.75:
             output.set_value((np.inf, self.X_WHome, item_selection))
             return
