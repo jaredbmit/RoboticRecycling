@@ -2,7 +2,7 @@ from enum import Enum
 import numpy as np
 from pydrake.all import (LeafSystem, JacobianWrtVariable, PointCloud, ImageRgba8U, ImageDepth32F, 
                         Concatenate, BaseField, Fields, RigidTransform, RotationMatrix, 
-                        AbstractValue, PiecewisePose)
+                        AbstractValue, PiecewisePose, MathematicalProgram, Solve)
 
 import torch
 import torch.utils.data
@@ -46,7 +46,7 @@ class ClosedLoopPseudoInverseController(LeafSystem):
     """
     Ingests a desired iiwa spatial trajectory and outputs joint velocity commands
     """
-    def __init__(self, plant, dt=0.05):
+    def __init__(self, plant, q0, dt=0.05, joint_centering=True):
         LeafSystem.__init__(self)
         self._plant = plant
         self._plant_context = plant.CreateDefaultContext()
@@ -54,6 +54,8 @@ class ClosedLoopPseudoInverseController(LeafSystem):
         self._G = plant.GetBodyByName("body").body_frame()
         self._W = plant.world_frame()
         self.dt = dt # Look ahead time for trajectory follower
+        self.q0 = q0 # Home
+        self.joint_centering = joint_centering
 
         traj_dtype = AbstractValue.Make(PiecewisePose())
         self.T_G_port = self.DeclareAbstractInputPort("T_WG", traj_dtype)
@@ -61,6 +63,42 @@ class ClosedLoopPseudoInverseController(LeafSystem):
         self.DeclareVectorOutputPort("iiwa_velocity", 7, self.CalcOutput)
         self.iiwa_start = plant.GetJointByName("iiwa_joint_1").velocity_start()
         self.iiwa_end = plant.GetJointByName("iiwa_joint_7").velocity_start()
+
+    def QP(self, q, J_G, V_D, k=1):
+        """
+        Instantiates and solves a quadratic program to solve for joint velocities whose 
+        resulting spatial velocity minimizes the distance to the desired spatial velocity.
+        Includes joint centering term to prevent entanglement.
+        Subject to joint constraints.
+        Source: https://manipulation.mit.edu/pick.html
+            "3.10.4 Joint centering" section
+        """
+        m, n = J_G.shape
+        prog = MathematicalProgram()
+        v = prog.NewContinuousVariables(n, 1, "v")
+
+        # Add pseudo inverse cost
+        Q_p = 2 * J_G.T @ J_G
+        b_p = (-2 * V_D.T @ J_G).reshape((n, 1))
+        c_p = (V_D.T @ V_D).item()
+        prog.AddQuadraticCost(Q_p, b_p, c_p, vars=v)
+
+        # Add joint centering cost
+        if self.joint_centering:
+            eps = 0.01 # Joint centering weight ## UNUSED
+            P = np.eye(n) - np.linalg.pinv(J_G).dot(J_G) # Projection matrix to jacobian null space
+            Q_jc = 2 * P.T @ P
+            Kp = np.eye(n) * k # Joint centering gain matrix (proportional control)
+            col_vec = P @ Kp @ (self.q0 - q)
+            b_jc = (-2 * col_vec.T @ P).reshape((n,1))
+            c_jc = (col_vec.T @ col_vec).item()
+            prog.AddQuadraticCost(Q_jc, b_jc, c_jc, vars=v)
+        
+        ## TODO No joint limits for now, can add later
+        ## If joint limits are added, important to use the eps in joint centering term
+
+        result = Solve(prog)
+        return result.GetSolution(v)
 
     def CalcOutput(self, context, output):
         
@@ -94,9 +132,14 @@ class ClosedLoopPseudoInverseController(LeafSystem):
             self._G, [0,0,0], self._W, self._W)
         J_G = J_G[:,self.iiwa_start:self.iiwa_end+1] # Only iiwa terms.
 
-        # Calculate joint velocities
-        v = np.linalg.pinv(J_G).dot(V_D)
-        output.SetFromVector(v)  
+        # Calculate joint velocities using QP
+        v = self.QP(q, J_G, V_D).reshape((7,1))
+
+        # # Calculate joint velocities using pseudo inverse
+        # v = np.linalg.pinv(J_G).dot(V_D)
+
+        # Return joint velocities
+        output.SetFromVector(v)
         
 class Vision(LeafSystem):
     def __init__(self, station, camera_body_indices, model_path, item_names):
